@@ -1,443 +1,594 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Gestionnaire de Membres D2B1</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter Font -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f4f7f9;
+        :root{
+            --accent: #5b21b6; /* indigo-700 */
+            --accent-600: #4c1d95;
         }
-        /* Custom scrollbar for better look */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(180deg,#f3f6fb 0%, #f8fafc 100%); }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height:8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        /* small card shadow */
+        .card { background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(22,24,33,0.06); }
+        .field-label { font-weight: 600; color: #374151; font-size: 0.9rem; }
+        .muted { color: #6b7280; font-size: 0.85rem; }
     </style>
 </head>
-<body class="p-4 sm:p-8 min-h-screen">
+<body class="min-h-screen p-6 sm:p-12">
 
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-extrabold text-gray-800 mb-8 text-center border-b-4 border-indigo-500 pb-2">
-            Gestionnaire de Membres <span class="text-indigo-600">DREAM2BUILD1</span>
-        </h1>
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800">
+                Gestionnaire de Membres <span class="text-indigo-600">DREAM2BUILD1</span>
+            </h1>
+            <div class="mt-2 h-1 w-48 mx-auto rounded bg-gradient-to-r from-indigo-400 to-indigo-600"></div>
+        </header>
 
-        <!-- SEARCH AND MEMBER ID INPUT -->
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 21h7a2 2 0 002-2v-7m1.696-4.696l-3.293 3.293a1 1 0 01-1.414 0l-3.293-3.293m0 0a1 1 0 010-1.414l3.293-3.293m0 0a1 1 0 111.414 1.414l-3.293 3.293m-1.696 4.696A7 7 0 0010 21a7 7 0 007-7h-7m-4 0a3 3 0 00-3 3v2M16 4h4M3 6h4M3 10h4M3 14h4M3 18h4" />
-                </svg>
-                Rechercher un Membre
-            </h2>
-            <div class="flex flex-col sm:flex-row gap-4">
-                <input type="text" id="memberIdInput" placeholder="Ex: D2B1-IWN-001" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150" value="D2B1-IWN-001">
-                <button id="searchButton" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-200 shadow-md">
-                    Charger / Créer
-                </button>
+        <!-- Search -->
+        <section class="card p-6 mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div class="flex-1">
+                    <label class="field-label">Rechercher un Membre</label>
+                    <div class="mt-2 flex gap-2">
+                        <input id="memberIdInput" type="text" placeholder="Ex: D2B1-IWN-001"
+                               class="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300" value="D2B1-IWN-001">
+                        <button id="searchButton" class="px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700">
+                            Charger / Créer
+                        </button>
+                    </div>
+                    <p id="statusMessage" class="mt-2 muted"></p>
+                </div>
+
+                <div class="w-full sm:w-auto flex items-end">
+                    <div class="text-right">
+                        <p class="muted text-sm">App ID:</p>
+                        <div id="displayAppId" class="font-medium text-sm">default-app-id</div>
+                    </div>
+                </div>
             </div>
-            <p id="statusMessage" class="mt-3 text-sm text-red-600 font-medium"></p>
-        </div>
+        </section>
 
-        <!-- MEMBER CARD / FORM -->
-        <div id="memberCard" class="bg-white p-6 rounded-xl shadow-2xl transition-opacity duration-300 opacity-0" style="min-height: 400px;" aria-live="polite">
-
-            <div class="flex flex-col md:flex-row gap-6">
-
-                <!-- PHOTO SECTION -->
-                <div class="md:w-1/3 flex flex-col items-center">
-                    <div class="w-40 h-40 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border-4 border-indigo-200 shadow-inner mb-4">
+        <!-- Member card -->
+        <section id="memberCard" class="card p-6 opacity-0 transition-opacity duration-300" aria-live="polite" style="min-height:460px;">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Photo & actions -->
+                <div class="lg:col-span-1 flex flex-col items-center">
+                    <div class="w-44 h-44 rounded-full overflow-hidden border-4 border-indigo-50 shadow-inner mb-4 bg-gray-100 flex items-center justify-center">
                         <img id="memberPhotoPreview" src="https://placehold.co/160x160/cbd5e1/475569?text=Photo" alt="Photo de profil" class="w-full h-full object-cover">
                     </div>
                     <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="previewImage(event)">
-                    <button onclick="document.getElementById('photoInput').click()" class="text-sm text-indigo-600 font-semibold hover:text-indigo-800 transition duration-150 px-4 py-2 bg-indigo-50 rounded-lg">
-                        Ajouter / Changer Photo
-                    </button>
-                    <p class="text-xs text-gray-500 mt-2 text-center">Taille maximale recommandée : 100 KB</p>
+                    <div class="flex flex-col gap-2 w-full">
+                        <button onclick="document.getElementById('photoInput').click()" class="w-full py-2 rounded-lg bg-indigo-50 text-indigo-600 font-medium hover:bg-indigo-100">Ajouter / Changer Photo</button>
+                        <button onclick="downloadPhoto()" class="w-full py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Télécharger Photo</button>
+                    </div>
+                    <p class="muted text-center mt-3">Taille recommandée: &lt; 100 KB — image compressée automatiquement si nécessaire.</p>
                 </div>
 
-                <!-- FORM FIELDS SECTION -->
-                <div class="md:w-2/3 space-y-4">
-                    <h2 class="text-2xl font-bold text-indigo-700 mb-6 border-b pb-2">Fiche d'Identité</h2>
-
-                    <!-- ID and Name -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="memberIdDisplay" class="block text-sm font-medium text-gray-700">ID du Membre</label>
-                            <input type="text" id="memberIdDisplay" readonly class="mt-1 block w-full p-3 border border-gray-300 bg-gray-100 rounded-lg cursor-not-allowed">
-                        </div>
-                        <div>
-                            <label for="nom" class="block text-sm font-medium text-gray-700">Nom</label>
-                            <input type="text" id="nom" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="prenom" class="block text-sm font-medium text-gray-700">Prénom</label>
-                            <input type="text" id="prenom" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
-                        </div>
-                        <div>
-                            <label for="dateNaissance" class="block text-sm font-medium text-gray-700">Date de Naissance</label>
-                            <input type="date" id="dateNaissance" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
-                        </div>
+                <!-- Main form -->
+                <div class="lg:col-span-2">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-indigo-700">Fiche d'Identité</h2>
+                        <div class="text-sm muted">Dernière modif: <span id="lastModified">-</span></div>
                     </div>
 
-                    <!-- Blood Type -->
-                    <div>
-                        <label for="groupeSanguin" class="block text-sm font-medium text-gray-700">Groupe Sanguin</label>
-                        <select id="groupeSanguin" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
-                            <option value="">Sélectionner</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                        </select>
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="field-label">ID du Membre</label>
+                            <input id="memberIdDisplay" readonly class="mt-1 block w-full p-3 border border-gray-200 bg-gray-50 rounded-lg cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="field-label">Nom</label>
+                            <input id="nom" class="mt-1 block w-full p-3 border border-gray-200 rounded-lg" />
+                        </div>
+
+                        <div>
+                            <label class="field-label">Prénom</label>
+                            <input id="prenom" class="mt-1 block w-full p-3 border border-gray-200 rounded-lg" />
+                        </div>
+                        <div>
+                            <label class="field-label">Date de Naissance</label>
+                            <input id="dateNaissance" type="date" class="mt-1 block w-full p-3 border border-gray-200 rounded-lg" />
+                        </div>
+
+                        <div>
+                            <label class="field-label">Groupe Sanguin</label>
+                            <select id="groupeSanguin" class="mt-1 block w-full p-3 border border-gray-200 rounded-lg">
+                                <option value="">Sélectionner</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- CUSTOM FIELDS SECTION -->
-                    <h3 class="text-xl font-semibold text-gray-700 pt-4 border-t mt-6">Champs Personnalisés (D2B1)</h3>
-                    <div id="customFieldsContainer" class="space-y-3">
-                        <!-- Custom fields will be appended here -->
-                    </div>
-                    <button onclick="addCustomField()" class="text-sm text-green-600 font-semibold hover:text-green-800 transition duration-150 px-3 py-1 bg-green-50 rounded-lg flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Ajouter un Champ
-                    </button>
+                    <!-- Finance / investment area -->
+                    <div class="mt-6 border-t pt-4">
+                        <h3 class="text-lg font-semibold text-gray-700">Informations d'Investissement</h3>
 
-                    <!-- SAVE BUTTON -->
-                    <button id="saveButton" class="w-full mt-8 bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition duration-200 shadow-lg">
-                        Sauvegarder les Informations
-                    </button>
-                    <p id="saveMessage" class="mt-2 text-center text-sm font-medium text-gray-600"></p>
+                        <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div>
+                                <label class="field-label">Nombre de personnes investir</label>
+                                <input id="nbrInvest" type="number" min="0" class="mt-1 p-2 border border-gray-200 rounded-lg" placeholder="ex. 22">
+                            </div>
+
+                            <div>
+                                <label class="field-label">Personnes payées</label>
+                                <input id="personnesPayer" type="number" min="0" class="mt-1 p-2 border border-gray-200 rounded-lg" placeholder="ex. 5">
+                            </div>
+
+                            <div>
+                                <label class="field-label">Quantité investir (CFA / €)</label>
+                                <input id="quantiteInvest" type="number" min="0" step="0.01" class="mt-1 p-2 border border-gray-200 rounded-lg" placeholder="ex. 10000">
+                            </div>
+
+                            <div>
+                                <label class="field-label">Somme payée (total)</label>
+                                <input id="sommePaye" type="number" min="0" step="0.01" class="mt-1 p-2 border border-gray-200 rounded-lg" placeholder="ex. 25000">
+                            </div>
+
+                            <div>
+                                <label class="field-label">Le un tiers (quantité / 3)</label>
+                                <input id="leUnTier" readonly class="mt-1 p-2 border border-gray-100 bg-gray-50 rounded-lg" placeholder="Calcul automatique">
+                            </div>
+
+                            <div>
+                                <label class="field-label">Nombre de transaction par personne</label>
+                                <input id="nbrTxParPers" type="number" min="0" class="mt-1 p-2 border border-gray-200 rounded-lg" placeholder="ex. 1">
+                            </div>
+
+                            <div class="col-span-full">
+                                <label class="field-label">Relance après 22 personnes</label>
+                                <div class="mt-2 flex items-center gap-3">
+                                    <div id="relanceBadge" class="px-3 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-700">Statut: —</div>
+                                    <div class="muted">Le système indiquera si la relance doit être faite automatiquement après avoir atteint 22 personnes.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom fields -->
+                    <div class="mt-6 border-t pt-4">
+                        <h3 class="text-lg font-semibold text-gray-700">Champs Personnalisés (D2B1)</h3>
+                        <div id="customFieldsContainer" class="mt-3 space-y-3"></div>
+                        <div class="mt-3">
+                            <button onclick="addCustomField()" class="px-3 py-1 rounded-lg bg-green-50 text-green-700">+ Ajouter un Champ</button>
+                        </div>
+                    </div>
+
+                    <!-- Save -->
+                    <div class="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        <div class="w-full sm:w-auto flex gap-2">
+                            <button id="saveButton" class="px-6 py-3 rounded-lg bg-green-500 text-white font-semibold shadow hover:bg-green-600">Sauvegarder</button>
+                            <button id="clearButton" class="px-4 py-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Nouveau</button>
+                        </div>
+                        <p id="saveMessage" class="muted text-sm text-center sm:text-right"></p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <p class="text-center text-xs text-gray-500 mt-12">
-            Propulsé par Firebase Firestore pour la persistance des données. App ID: <span id="displayAppId"></span>
-        </p>
+        <p class="text-center muted text-xs mt-8">Propulsé par Firebase Firestore pour la persistance. Si la configuration Firebase n'est pas fournie, les données seront stockées localement (localStorage) pour test.</p>
     </div>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs + Application JS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // IMPORTANT: Global variables provided by the Canvas environment
+        // Global Canvas-provided variables (if any)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
 
         document.getElementById('displayAppId').textContent = appId;
-        setLogLevel('Debug');
 
-        let app, db, auth, userId = null;
-        let isAuthCompleted = false; // Flag pour s'assurer que l'authentification est terminée
-
-        // --- FIREBASE INITIALIZATION AND AUTHENTICATION ---
-        try {
-            // Vérification de la configuration Firebase
-            if (!firebaseConfig || !firebaseConfig.projectId) {
-                const errorMessage = "Erreur de configuration Firebase: 'projectId' est manquant dans la configuration. Le Canvas n'a pas fourni la configuration ou elle est invalide.";
-                console.error("Firebase Configuration Error:", errorMessage, firebaseConfig);
-                document.getElementById('statusMessage').textContent = "Erreur: Impossible d'initialiser Firebase. La configuration est manquante ou invalide.";
-                // Arrête l'initialisation si la configuration est mauvaise
-                throw new Error("Firebase configuration invalid."); 
-            }
-
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            // Authentication logic
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    isAuthCompleted = true;
-                    console.log("Authenticated User ID:", userId);
-                    // Le système est prêt. On charge la fiche par défaut.
-                    document.getElementById('memberCard').style.opacity = '1';
-                    loadMember(); 
-                } else {
-                    // Tente de se connecter avec le token personnalisé ou anonymement
-                    if (typeof __initial_auth_token !== 'undefined') {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                }
-            });
-
-        } catch (error) {
-            console.error("Firebase Initialization Failed:", error);
-            // Mettre à jour le message si ce n'est pas déjà l'erreur de configuration
-            if (!document.getElementById('statusMessage').textContent.includes("manquante")) {
-                document.getElementById('statusMessage').textContent = "Erreur: Impossible d'initialiser Firebase. Vérifiez la console pour les détails.";
-            }
-        }
-
-        // --- GLOBAL STATE AND UTILITIES ---
+        // State
+        let app = null, db = null, auth = null;
+        let isAuthCompleted = false;
+        let useFirestore = false;
         let currentMemberId = null;
         let photoBase64 = null;
-        const membersCollectionPath = `/artifacts/${appId}/public/data/members`;
+        const localStorageKey = `members-${appId}`;
 
-        /**
-         * Converts a File object (image) to a Base64 string.
-         * @param {File} file
-         * @returns {Promise<string>} Base64 data URL
-         */
-        const fileToBase64 = (file) => {
+        // Utility: show message
+        function showMessage(message, type = 'info', targetId = 'statusMessage') {
+            const target = document.getElementById(targetId);
+            target.textContent = message;
+            target.className = (type === 'success') ? 'mt-2 text-sm text-green-600 font-medium' :
+                                (type === 'error') ? 'mt-2 text-sm text-red-600 font-medium' :
+                                (type === 'warning') ? 'mt-2 text-sm text-orange-600 font-medium' :
+                                'mt-2 muted';
+        }
+
+        // Initialize Firebase if config provided. Otherwise enable local fallback.
+        try {
+            if (firebaseConfig && firebaseConfig.projectId) {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                useFirestore = true;
+                // Authentication
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        isAuthCompleted = true;
+                        document.getElementById('memberCard').style.opacity = '1';
+                        showMessage("Connecté à Firebase.", 'success');
+                        // auto-load default entry if any
+                        // don't call loadMember automatically; wait user click
+                    } else {
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                });
+            } else {
+                showMessage("Aucune configuration Firebase fournie — utilisation du stockage local (localStorage) pour test.", 'warning');
+                document.getElementById('memberCard').style.opacity = '1';
+                useFirestore = false;
+                isAuthCompleted = true;
+            }
+        } catch (err) {
+            console.error("Firebase init error:", err);
+            showMessage("Erreur d'initialisation Firebase. Utilisation du stockage local.", 'warning');
+            useFirestore = false;
+            isAuthCompleted = true;
+            document.getElementById('memberCard').style.opacity = '1';
+        }
+
+        // Helpers: local storage read/write
+        function readLocalMembers() {
+            try {
+                const raw = localStorage.getItem(localStorageKey);
+                return raw ? JSON.parse(raw) : {};
+            } catch(e) {
+                return {};
+            }
+        }
+        function writeLocalMembers(obj) {
+            localStorage.setItem(localStorageKey, JSON.stringify(obj));
+        }
+
+        // File to base64 with optional resizing/compression (uses canvas)
+        async function fileToBase64Compressed(file, maxWidth = 800, quality = 0.8) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // if image is already small, keep original
+                        const canvas = document.createElement('canvas');
+                        let { width, height } = img;
+                        if (width > maxWidth) {
+                            height = Math.round((maxWidth / width) * height);
+                            width = maxWidth;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const mime = 'image/jpeg';
+                        const dataUrl = canvas.toDataURL(mime, quality);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = reject;
+                    img.src = reader.result;
+                };
+                reader.onerror = reject;
                 reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
             });
+        }
+
+        // Image preview handler
+        window.previewImage = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showMessage("Veuillez choisir une image valide.", 'error', 'saveMessage');
+                return;
+            }
+            // compress/resize
+            try {
+                const compressed = await fileToBase64Compressed(file, 800, 0.8);
+                photoBase64 = compressed;
+                document.getElementById('memberPhotoPreview').src = compressed;
+                showMessage("Photo chargée (compressée si nécessaire). Cliquez Sauvegarder.", 'success', 'saveMessage');
+            } catch (e) {
+                console.error(e);
+                showMessage("Erreur lors du traitement de l'image.", 'error', 'saveMessage');
+            }
         };
 
-        // --- CUSTOM FIELDS MANAGEMENT (DOM) ---
+        function downloadPhoto() {
+            if (!photoBase64) {
+                showMessage("Aucune photo disponible.", 'warning', 'saveMessage');
+                return;
+            }
+            const a = document.createElement('a');
+            a.href = photoBase64;
+            a.download = `${currentMemberId || 'photo'}.jpg`;
+            a.click();
+        }
 
-        /**
-         * Creates the HTML structure for a single custom field.
-         * @param {string} key
-         * @param {string} value
-         * @param {number} index
-         */
-        const createCustomFieldElement = (key = '', value = '', index) => {
+        // Custom fields DOM
+        let customFieldIndex = 0;
+        function createCustomFieldElement(key = '', value = '', index) {
             const container = document.createElement('div');
             container.className = 'flex gap-3 items-center';
             container.setAttribute('data-index', index);
-
             container.innerHTML = `
-                <input type="text" class="custom-key p-2 border border-gray-300 rounded-lg flex-1 text-sm" placeholder="Nom du Champ (Ex: Role, Skill)" value="${key}">
-                <input type="text" class="custom-value p-2 border border-gray-300 rounded-lg flex-2 text-sm" placeholder="Valeur" value="${value}">
-                <button onclick="removeCustomField(${index})" class="text-red-500 hover:text-red-700 transition duration-150 p-2 bg-red-50 rounded-full flex-shrink-0" title="Supprimer le champ">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
-                    </svg>
+                <input type="text" class="custom-key p-2 border border-gray-200 rounded-lg flex-1 text-sm" placeholder="Nom du Champ" value="${escapeHtml(key)}">
+                <input type="text" class="custom-value p-2 border border-gray-200 rounded-lg flex-1 text-sm" placeholder="Valeur" value="${escapeHtml(value)}">
+                <button data-action="remove" class="text-red-500 hover:text-red-700 p-2 bg-red-50 rounded-full" title="Supprimer">
+                    ✕
                 </button>
             `;
+            container.querySelector('[data-action="remove"]').addEventListener('click', () => container.remove());
             document.getElementById('customFieldsContainer').appendChild(container);
-        };
-
-        let customFieldIndex = 0;
+        }
         window.addCustomField = () => {
             customFieldIndex++;
             createCustomFieldElement('', '', customFieldIndex);
         };
 
-        window.removeCustomField = (index) => {
-            const container = document.querySelector(`#customFieldsContainer > div[data-index="${index}"]`);
-            if (container) {
-                container.remove();
-            }
-        };
+        function escapeHtml(str = '') {
+            return (''+str).replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+        }
 
-        // --- DATA RETRIEVAL AND DISPLAY ---
-
+        // Load and Save logic (Firestore if available, otherwise localStorage)
         document.getElementById('searchButton').addEventListener('click', loadMember);
-        document.getElementById('memberIdInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                loadMember();
-            }
-        });
+        document.getElementById('memberIdInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') loadMember(); });
+        document.getElementById('saveButton').addEventListener('click', saveMember);
+        document.getElementById('clearButton').addEventListener('click', () => resetForm(true));
 
         async function loadMember() {
-            // Vérification de la complétion de l'authentification avant l'appel à Firestore
             if (!isAuthCompleted) {
-                showMessage("Initialisation en cours. Veuillez attendre quelques secondes ou réessayer.", 'warning');
+                showMessage("Initialisation en cours. Veuillez patienter...", 'warning');
                 return;
             }
-
-            const memberIdInput = document.getElementById('memberIdInput').value.trim().toUpperCase();
-            if (!memberIdInput) {
-                showMessage("Veuillez entrer un ID de membre valide.", 'error');
-                return;
-            }
-
-            currentMemberId = memberIdInput;
+            const id = (document.getElementById('memberIdInput').value || '').trim().toUpperCase();
+            if (!id) { showMessage("Veuillez entrer un ID de membre valide.", 'error'); return; }
+            currentMemberId = id;
             document.getElementById('memberIdDisplay').value = currentMemberId;
-            resetForm(false); // Reset all fields except the ID
+            resetForm(false);
 
-            try {
-                const memberRef = doc(db, membersCollectionPath, currentMemberId);
-                const docSnap = await getDoc(memberRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    showMessage(`Membre "${currentMemberId}" chargé avec succès.`, 'success');
-
-                    // Populate fixed fields
-                    document.getElementById('nom').value = data.nom || '';
-                    document.getElementById('prenom').value = data.prenom || '';
-                    document.getElementById('dateNaissance').value = data.dateNaissance || '';
-                    document.getElementById('groupeSanguin').value = data.groupeSanguin || '';
-
-                    // Handle photo
-                    photoBase64 = data.photoBase64 || null;
-                    document.getElementById('memberPhotoPreview').src = photoBase64 || 'https://placehold.co/160x160/cbd5e1/475569?text=Photo';
-
-                    // Populate custom fields
-                    document.getElementById('customFieldsContainer').innerHTML = '';
-                    customFieldIndex = 0;
-                    if (data.champsPersonnalises) {
-                        for (const [key, value] of Object.entries(data.champsPersonnalises)) {
-                            customFieldIndex++;
-                            createCustomFieldElement(key, value, customFieldIndex);
-                        }
+            if (useFirestore && db) {
+                try {
+                    const ref = doc(db, `/artifacts/${appId}/public/data/members`, currentMemberId);
+                    const snap = await getDoc(ref);
+                    if (snap.exists && snap.exists()) {
+                        const data = snap.data();
+                        populateFormFromData(data);
+                        showMessage(`Membre "${currentMemberId}" chargé depuis Firestore.`, 'success');
+                    } else {
+                        showMessage(`ID "${currentMemberId}" non trouvé — prêt à créer.`,'warning');
+                        // keep cleared form for creation
                     }
-
-                } else {
-                    showMessage(`ID "${currentMemberId}" non trouvé. Prêt à créer un nouveau membre.`, 'warning');
-                    resetForm(true); // Reset and clear all fields for creation
+                } catch (e) {
+                    console.error(e);
+                    showMessage("Erreur lors du chargement depuis Firestore. Utilisation du stockage local si disponible.", 'error');
+                    // Try local fallback
+                    const local = readLocalMembers();
+                    if (local[currentMemberId]) {
+                        populateFormFromData(local[currentMemberId]);
+                        showMessage(`Membre "${currentMemberId}" chargé depuis stockage local.`, 'success');
+                    }
                 }
-
-            } catch (e) {
-                console.error("Erreur lors du chargement du membre:", e);
-                // Si l'erreur se produit ici, c'est probablement lié aux permissions ou à la connexion DB.
-                showMessage("Erreur: Impossible de charger les données du membre. (Vérifiez votre connexion/permissions)", 'error');
+            } else {
+                const local = readLocalMembers();
+                if (local[currentMemberId]) {
+                    populateFormFromData(local[currentMemberId]);
+                    showMessage(`Membre "${currentMemberId}" chargé depuis stockage local.`, 'success');
+                } else {
+                    showMessage(`ID "${currentMemberId}" non trouvé localement — prêt à créer.`, 'warning');
+                }
             }
         }
 
-        // --- DATA SAVING (CREATE/UPDATE) ---
+        function populateFormFromData(data) {
+            document.getElementById('nom').value = data.nom || '';
+            document.getElementById('prenom').value = data.prenom || '';
+            document.getElementById('dateNaissance').value = data.dateNaissance || '';
+            document.getElementById('groupeSanguin').value = data.groupeSanguin || '';
+            photoBase64 = data.photoBase64 || null;
+            document.getElementById('memberPhotoPreview').src = photoBase64 || 'https://placehold.co/160x160/cbd5e1/475569?text=Photo';
 
-        document.getElementById('saveButton').addEventListener('click', saveMember);
+            // finance fields
+            document.getElementById('nbrInvest').value = data.nbrInvest ?? '';
+            document.getElementById('personnesPayer').value = data.personnesPayer ?? '';
+            document.getElementById('quantiteInvest').value = data.quantiteInvest ?? '';
+            document.getElementById('sommePaye').value = data.sommePaye ?? '';
+            document.getElementById('nbrTxParPers').value = data.nbrTxParPers ?? '';
+            computeDerivedFields();
 
-        async function saveMember() {
-             if (!isAuthCompleted) {
-                showMessage("Initialisation en cours. Veuillez attendre ou réessayer.", 'error', 'saveMessage');
-                return;
+            // custom fields
+            document.getElementById('customFieldsContainer').innerHTML = '';
+            customFieldIndex = 0;
+            if (data.champsPersonnalises) {
+                for (const [k,v] of Object.entries(data.champsPersonnalises)) {
+                    customFieldIndex++;
+                    createCustomFieldElement(k, v, customFieldIndex);
+                }
             }
 
+            if (data.derniereModification) {
+                document.getElementById('lastModified').textContent = new Date(data.derniereModification).toLocaleString();
+            } else {
+                document.getElementById('lastModified').textContent = '-';
+            }
+        }
+
+        async function saveMember() {
+            if (!isAuthCompleted) {
+                showMessage("Initialisation en cours. Veuillez attendre...", 'error', 'saveMessage');
+                return;
+            }
             if (!currentMemberId) {
-                showMessage("Veuillez charger ou entrer un ID de membre d'abord.", 'error');
+                showMessage("Veuillez charger ou entrer un ID de membre d'abord.", 'error', 'saveMessage');
                 return;
             }
 
             document.getElementById('saveButton').disabled = true;
             document.getElementById('saveButton').textContent = "Sauvegarde en cours...";
 
-            // 1. Gather Fixed Data
+            // gather data
             const memberData = {
                 id: currentMemberId,
                 nom: document.getElementById('nom').value.trim(),
                 prenom: document.getElementById('prenom').value.trim(),
                 dateNaissance: document.getElementById('dateNaissance').value,
                 groupeSanguin: document.getElementById('groupeSanguin').value,
-                // The photoBase64 variable holds the latest photo data (either loaded or new upload)
                 photoBase64: photoBase64,
-                derniereModification: new Date().toISOString()
+                derniereModification: new Date().toISOString(),
+                // investment fields
+                nbrInvest: parseNumberField('nbrInvest'),
+                personnesPayer: parseNumberField('personnesPayer'),
+                quantiteInvest: parseFloatOrNull('quantiteInvest'),
+                sommePaye: parseFloatOrNull('sommePaye'),
+                nbrTxParPers: parseNumberField('nbrTxParPers'),
             };
 
-            // 2. Gather Custom Fields
+            // custom fields
             const customFields = {};
             const customFieldElements = document.querySelectorAll('#customFieldsContainer > div');
             customFieldElements.forEach(container => {
-                const keyInput = container.querySelector('.custom-key');
-                const valueInput = container.querySelector('.custom-value');
-                const key = keyInput.value.trim();
-                const value = valueInput.value.trim();
-
-                if (key && value) {
-                    customFields[key] = value;
-                }
+                const key = (container.querySelector('.custom-key')?.value || '').trim();
+                const value = (container.querySelector('.custom-value')?.value || '').trim();
+                if (key) customFields[key] = value;
             });
             memberData.champsPersonnalises = customFields;
 
+            // derived fields
+            memberData.leUnTier = computeLeUnTier(memberData.quantiteInvest);
+            memberData.relaunchAfter22 = shouldRelauch(memberData.nbrInvest, memberData.personnesPayer);
 
-            // 3. Validation
+            // validation
             if (!memberData.nom || !memberData.prenom) {
                 showMessage("Le Nom et le Prénom sont obligatoires.", 'error', 'saveMessage');
                 document.getElementById('saveButton').disabled = false;
-                document.getElementById('saveButton').textContent = "Sauvegarder les Informations";
+                document.getElementById('saveButton').textContent = "Sauvegarder";
                 return;
             }
 
-            // 4. Save to Firestore
-            try {
-                const memberRef = doc(db, membersCollectionPath, currentMemberId);
-                await setDoc(memberRef, memberData);
-                showMessage(`Membre "${currentMemberId}" sauvegardé avec succès.`, 'success', 'saveMessage');
-            } catch (e) {
-                console.error("Erreur lors de la sauvegarde du membre:", e);
-                showMessage("Erreur: Impossible de sauvegarder les données du membre.", 'error', 'saveMessage');
-            } finally {
-                document.getElementById('saveButton').disabled = false;
-                document.getElementById('saveButton').textContent = "Sauvegarder les Informations";
+            // Save to Firestore or local
+            if (useFirestore && db) {
+                try {
+                    const ref = doc(db, `/artifacts/${appId}/public/data/members`, currentMemberId);
+                    await setDoc(ref, memberData);
+                    showMessage(`Membre "${currentMemberId}" sauvegardé sur Firestore.`, 'success', 'saveMessage');
+                } catch (e) {
+                    console.error("Firestore save error:", e);
+                    showMessage("Erreur: impossible de sauvegarder sur Firestore — sauvegarde locale effectuée.", 'error', 'saveMessage');
+                    // fallback local save
+                    const all = readLocalMembers();
+                    all[currentMemberId] = memberData;
+                    writeLocalMembers(all);
+                }
+            } else {
+                const all = readLocalMembers();
+                all[currentMemberId] = memberData;
+                writeLocalMembers(all);
+                showMessage(`Membre "${currentMemberId}" sauvegardé localement.`, 'success', 'saveMessage');
+            }
+
+            // Update UI
+            document.getElementById('lastModified').textContent = new Date(memberData.derniereModification).toLocaleString();
+            computeDerivedFields();
+            document.getElementById('saveButton').disabled = false;
+            document.getElementById('saveButton').textContent = "Sauvegarder";
+        }
+
+        function parseNumberField(id) {
+            const v = document.getElementById(id).value;
+            if (!v) return null;
+            const n = parseInt(v, 10);
+            return isNaN(n) ? null : n;
+        }
+        function parseFloatOrNull(id) {
+            const v = document.getElementById(id).value;
+            if (!v) return null;
+            const f = parseFloat(v);
+            return isNaN(f) ? null : f;
+        }
+
+        function computeLeUnTier(qty) {
+            if (typeof qty !== 'number' || isNaN(qty)) return null;
+            return Math.round((qty / 3) * 100) / 100;
+        }
+        function shouldRelauch(nbrInvest, personnesPayer) {
+            // Consider relaunch if 22 or more participants targeted OR 22 or more paid
+            const threshold = 22;
+            if ((nbrInvest || 0) >= threshold) return true;
+            if ((personnesPayer || 0) >= threshold) return true;
+            return false;
+        }
+
+        function computeDerivedFields() {
+            const quantite = parseFloatOrNull('quantiteInvest');
+            const leUn = computeLeUnTier(quantite);
+            document.getElementById('leUnTier').value = leUn != null ? leUn : '';
+
+            const nbrInvest = parseNumberField('nbrInvest');
+            const personnesPayer = parseNumberField('personnesPayer');
+            const rel = shouldRelauch(nbrInvest, personnesPayer);
+            const badge = document.getElementById('relanceBadge');
+            if (rel) {
+                badge.textContent = 'Relance: OUI';
+                badge.className = 'px-3 py-2 rounded-full text-sm font-semibold bg-emerald-100 text-emerald-800';
+            } else {
+                badge.textContent = 'Relance: NON';
+                badge.className = 'px-3 py-2 rounded-full text-sm font-semibold bg-gray-100 text-gray-700';
             }
         }
 
+        // When finance fields change, compute derived fields live
+        ['quantiteInvest','nbrInvest','personnesPayer'].forEach(id=>{
+            document.getElementById(id).addEventListener('input', computeDerivedFields);
+        });
 
-        // --- UI HELPERS ---
-
-        /**
-         * Displays a status message.
-         * @param {string} message
-         * @param {'success'|'error'|'warning'} type
-         * @param {string} targetId
-         */
-        function showMessage(message, type, targetId = 'statusMessage') {
-            const target = document.getElementById(targetId);
-            target.textContent = message;
-            target.className = `mt-3 text-sm font-medium ${type === 'success' ? 'text-green-600' : type === 'error' ? 'text-red-600' : 'text-orange-600'}`;
-        }
-
-        /**
-         * Resets the form fields.
-         * @param {boolean} clearId - if true, also clears the ID display
-         */
-        function resetForm(clearId) {
+        // Reset form
+        function resetForm(clearId = true) {
+            if (clearId) {
+                currentMemberId = null;
+                document.getElementById('memberIdInput').value = '';
+                document.getElementById('memberIdDisplay').value = '';
+            }
             document.getElementById('nom').value = '';
             document.getElementById('prenom').value = '';
             document.getElementById('dateNaissance').value = '';
             document.getElementById('groupeSanguin').value = '';
-            document.getElementById('customFieldsContainer').innerHTML = '';
-            photoBase64 = null;
             document.getElementById('memberPhotoPreview').src = 'https://placehold.co/160x160/cbd5e1/475569?text=Photo';
+            photoBase64 = null;
 
-            if (clearId) {
-                document.getElementById('memberIdInput').value = ''; // Clear input field
-                document.getElementById('memberIdDisplay').value = '';
-                currentMemberId = null;
-            }
+            // finance
+            document.getElementById('nbrInvest').value = '';
+            document.getElementById('personnesPayer').value = '';
+            document.getElementById('quantiteInvest').value = '';
+            document.getElementById('sommePaye').value = '';
+            document.getElementById('nbrTxParPers').value = '';
+            document.getElementById('leUnTier').value = '';
+            document.getElementById('relanceBadge').textContent = 'Statut: —';
+            document.getElementById('customFieldsContainer').innerHTML = '';
+            customFieldIndex = 0;
+            document.getElementById('lastModified').textContent = '-';
+            showMessage('', 'info');
         }
 
-        // --- IMAGE PREVIEW AND BASE64 CONVERSION ---
-
-        window.previewImage = async (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // Simple check to prevent excessively large files (Firestore limit is 1MB)
-            if (file.size > 1024 * 500) { // 500 KB limit for safety
-                showMessage("Photo trop volumineuse. Veuillez choisir une image de moins de 500 KB.", 'error', 'saveMessage');
-                return;
-            }
-
-            try {
-                const base64String = await fileToBase64(file);
-                photoBase64 = base64String;
-                document.getElementById('memberPhotoPreview').src = base64String;
-                showMessage("Photo chargée en mémoire. Cliquez sur 'Sauvegarder' pour la stocker.", 'success', 'saveMessage');
-            } catch (e) {
-                console.error("Erreur lors de la conversion de l'image:", e);
-                showMessage("Erreur lors du chargement de la photo.", 'error', 'saveMessage');
-            }
-        };
+        // initialize small demo custom field
+        addCustomField();
     </script>
 </body>
 </html>
