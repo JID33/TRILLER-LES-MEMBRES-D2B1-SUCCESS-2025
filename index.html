@@ -150,6 +150,15 @@
 
         // --- FIREBASE INITIALIZATION AND AUTHENTICATION ---
         try {
+            // Vérification de la configuration Firebase
+            if (!firebaseConfig || !firebaseConfig.projectId) {
+                const errorMessage = "Erreur de configuration Firebase: 'projectId' est manquant dans la configuration. Le Canvas n'a pas fourni la configuration ou elle est invalide.";
+                console.error("Firebase Configuration Error:", errorMessage, firebaseConfig);
+                document.getElementById('statusMessage').textContent = "Erreur: Impossible d'initialiser Firebase. La configuration est manquante ou invalide.";
+                // Arrête l'initialisation si la configuration est mauvaise
+                throw new Error("Firebase configuration invalid."); 
+            }
+
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
@@ -174,8 +183,11 @@
             });
 
         } catch (error) {
-            console.error("Firebase Initialization Error:", error);
-            document.getElementById('statusMessage').textContent = "Erreur: Impossible d'initialiser Firebase. Vérifiez la configuration.";
+            console.error("Firebase Initialization Failed:", error);
+            // Mettre à jour le message si ce n'est pas déjà l'erreur de configuration
+            if (!document.getElementById('statusMessage').textContent.includes("manquante")) {
+                document.getElementById('statusMessage').textContent = "Erreur: Impossible d'initialiser Firebase. Vérifiez la console pour les détails.";
+            }
         }
 
         // --- GLOBAL STATE AND UTILITIES ---
