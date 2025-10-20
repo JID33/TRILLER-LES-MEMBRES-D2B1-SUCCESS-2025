@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de Membres D2B1</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+        }
+        /* Custom scrollbar for better look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 min-h-screen">
+
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-8 text-center border-b-4 border-indigo-500 pb-2">
+            Gestionnaire de Membres <span class="text-indigo-600">DREAM2BUILD1</span>
+        </h1>
+
+        <!-- SEARCH AND MEMBER ID INPUT -->
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 21h7a2 2 0 002-2v-7m1.696-4.696l-3.293 3.293a1 1 0 01-1.414 0l-3.293-3.293m0 0a1 1 0 010-1.414l3.293-3.293m0 0a1 1 0 111.414 1.414l-3.293 3.293m-1.696 4.696A7 7 0 0010 21a7 7 0 007-7h-7m-4 0a3 3 0 00-3 3v2M16 4h4M3 6h4M3 10h4M3 14h4M3 18h4" />
+                </svg>
+                Rechercher un Membre
+            </h2>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <input type="text" id="memberIdInput" placeholder="Ex: D2B1-IWN-001" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150" value="D2B1-IWN-001">
+                <button id="searchButton" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-200 shadow-md">
+                    Charger / Créer
+                </button>
+            </div>
+            <p id="statusMessage" class="mt-3 text-sm text-red-600 font-medium"></p>
+        </div>
+
+        <!-- MEMBER CARD / FORM -->
+        <div id="memberCard" class="bg-white p-6 rounded-xl shadow-2xl transition-opacity duration-300 opacity-0" style="min-height: 400px;" aria-live="polite">
+
+            <div class="flex flex-col md:flex-row gap-6">
+
+                <!-- PHOTO SECTION -->
+                <div class="md:w-1/3 flex flex-col items-center">
+                    <div class="w-40 h-40 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border-4 border-indigo-200 shadow-inner mb-4">
+                        <img id="memberPhotoPreview" src="https://placehold.co/160x160/cbd5e1/475569?text=Photo" alt="Photo de profil" class="w-full h-full object-cover">
+                    </div>
+                    <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="previewImage(event)">
+                    <button onclick="document.getElementById('photoInput').click()" class="text-sm text-indigo-600 font-semibold hover:text-indigo-800 transition duration-150 px-4 py-2 bg-indigo-50 rounded-lg">
+                        Ajouter / Changer Photo
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Taille maximale recommandée : 100 KB</p>
+                </div>
+
+                <!-- FORM FIELDS SECTION -->
+                <div class="md:w-2/3 space-y-4">
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-6 border-b pb-2">Fiche d'Identité</h2>
+
+                    <!-- ID and Name -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="memberIdDisplay" class="block text-sm font-medium text-gray-700">ID du Membre</label>
+                            <input type="text" id="memberIdDisplay" readonly class="mt-1 block w-full p-3 border border-gray-300 bg-gray-100 rounded-lg cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label for="nom" class="block text-sm font-medium text-gray-700">Nom</label>
+                            <input type="text" id="nom" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="prenom" class="block text-sm font-medium text-gray-700">Prénom</label>
+                            <input type="text" id="prenom" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                        </div>
+                        <div>
+                            <label for="dateNaissance" class="block text-sm font-medium text-gray-700">Date de Naissance</label>
+                            <input type="date" id="dateNaissance" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                        </div>
+                    </div>
+
+                    <!-- Blood Type -->
+                    <div>
+                        <label for="groupeSanguin" class="block text-sm font-medium text-gray-700">Groupe Sanguin</label>
+                        <select id="groupeSanguin" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                            <option value="">Sélectionner</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+
+                    <!-- CUSTOM FIELDS SECTION -->
+                    <h3 class="text-xl font-semibold text-gray-700 pt-4 border-t mt-6">Champs Personnalisés (D2B1)</h3>
+                    <div id="customFieldsContainer" class="space-y-3">
+                        <!-- Custom fields will be appended here -->
+                    </div>
+                    <button onclick="addCustomField()" class="text-sm text-green-600 font-semibold hover:text-green-800 transition duration-150 px-3 py-1 bg-green-50 rounded-lg flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ajouter un Champ
+                    </button>
+
+                    <!-- SAVE BUTTON -->
+                    <button id="saveButton" class="w-full mt-8 bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition duration-200 shadow-lg">
+                        Sauvegarder les Informations
+                    </button>
+                    <p id="saveMessage" class="mt-2 text-center text-sm font-medium text-gray-600"></p>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-center text-xs text-gray-500 mt-12">
+            Propulsé par Firebase Firestore pour la persistance des données. App ID: <span id="displayAppId"></span>
+        </p>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // IMPORTANT: Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+        document.getElementById('displayAppId').textContent = appId;
+        setLogLevel('Debug');
+
+        let app, db, auth, userId = null;
+
+        // --- FIREBASE INITIALIZATION AND AUTHENTICATION ---
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Authentication logic
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Authenticated User ID:", userId);
+                    // The system is now ready to use
+                    document.getElementById('memberCard').style.opacity = '1';
+                } else {
+                    // Try to sign in with custom token or anonymously
+                    if (typeof __initial_auth_token !== 'undefined') {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                        // If anonymous, a temporary userId will be generated by Firebase
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error("Firebase Initialization Error:", error);
+            document.getElementById('statusMessage').textContent = "Erreur: Impossible d'initialiser Firebase. Vérifiez la configuration.";
+            // Suppression du 'return;' illégal ici
+        }
+
+        // --- GLOBAL STATE AND UTILITIES ---
+        let currentMemberId = null;
+        let photoBase64 = null;
+        const membersCollectionPath = `/artifacts/${appId}/public/data/members`;
+
+        /**
+         * Converts a File object (image) to a Base64 string.
+         * @param {File} file
+         * @returns {Promise<string>} Base64 data URL
+         */
+        const fileToBase64 = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        };
+
+        // --- CUSTOM FIELDS MANAGEMENT (DOM) ---
+
+        /**
+         * Creates the HTML structure for a single custom field.
+         * @param {string} key
+         * @param {string} value
+         * @param {number} index
+         */
+        const createCustomFieldElement = (key = '', value = '', index) => {
+            const container = document.createElement('div');
+            container.className = 'flex gap-3 items-center';
+            container.setAttribute('data-index', index);
+
+            container.innerHTML = `
+                <input type="text" class="custom-key p-2 border border-gray-300 rounded-lg flex-1 text-sm" placeholder="Nom du Champ (Ex: Role, Skill)" value="${key}">
+                <input type="text" class="custom-value p-2 border border-gray-300 rounded-lg flex-2 text-sm" placeholder="Valeur" value="${value}">
+                <button onclick="removeCustomField(${index})" class="text-red-500 hover:text-red-700 transition duration-150 p-2 bg-red-50 rounded-full flex-shrink-0" title="Supprimer le champ">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            `;
+            document.getElementById('customFieldsContainer').appendChild(container);
+        };
+
+        let customFieldIndex = 0;
+        window.addCustomField = () => {
+            customFieldIndex++;
+            createCustomFieldElement('', '', customFieldIndex);
+        };
+
+        window.removeCustomField = (index) => {
+            const container = document.querySelector(`#customFieldsContainer > div[data-index="${index}"]`);
+            if (container) {
+                container.remove();
+            }
+        };
+
+        // --- DATA RETRIEVAL AND DISPLAY ---
+
+        document.getElementById('searchButton').addEventListener('click', loadMember);
+        document.getElementById('memberIdInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loadMember();
+            }
+        });
+
+        async function loadMember() {
+            const memberIdInput = document.getElementById('memberIdInput').value.trim().toUpperCase();
+            if (!memberIdInput) {
+                showMessage("Veuillez entrer un ID de membre valide.", 'error');
+                return;
+            }
+
+            currentMemberId = memberIdInput;
+            document.getElementById('memberIdDisplay').value = currentMemberId;
+            resetForm(false); // Reset all fields except the ID
+
+            try {
+                const memberRef = doc(db, membersCollectionPath, currentMemberId);
+                const docSnap = await getDoc(memberRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    showMessage(`Membre "${currentMemberId}" chargé avec succès.`, 'success');
+
+                    // Populate fixed fields
+                    document.getElementById('nom').value = data.nom || '';
+                    document.getElementById('prenom').value = data.prenom || '';
+                    document.getElementById('dateNaissance').value = data.dateNaissance || '';
+                    document.getElementById('groupeSanguin').value = data.groupeSanguin || '';
+
+                    // Handle photo
+                    photoBase64 = data.photoBase64 || null;
+                    document.getElementById('memberPhotoPreview').src = photoBase64 || 'https://placehold.co/160x160/cbd5e1/475569?text=Photo';
+
+                    // Populate custom fields
+                    document.getElementById('customFieldsContainer').innerHTML = '';
+                    customFieldIndex = 0;
+                    if (data.champsPersonnalises) {
+                        for (const [key, value] of Object.entries(data.champsPersonnalises)) {
+                            customFieldIndex++;
+                            createCustomFieldElement(key, value, customFieldIndex);
+                        }
+                    }
+
+                } else {
+                    showMessage(`ID "${currentMemberId}" non trouvé. Prêt à créer un nouveau membre.`, 'warning');
+                    resetForm(true); // Reset and clear all fields for creation
+                }
+
+            } catch (e) {
+                console.error("Erreur lors du chargement du membre:", e);
+                showMessage("Erreur: Impossible de charger les données du membre.", 'error');
+            }
+        }
+
+        // --- DATA SAVING (CREATE/UPDATE) ---
+
+        document.getElementById('saveButton').addEventListener('click', saveMember);
+
+        async function saveMember() {
+            if (!currentMemberId) {
+                showMessage("Veuillez charger ou entrer un ID de membre d'abord.", 'error');
+                return;
+            }
+
+            document.getElementById('saveButton').disabled = true;
+            document.getElementById('saveButton').textContent = "Sauvegarde en cours...";
+
+            // 1. Gather Fixed Data
+            const memberData = {
+                id: currentMemberId,
+                nom: document.getElementById('nom').value.trim(),
+                prenom: document.getElementById('prenom').value.trim(),
+                dateNaissance: document.getElementById('dateNaissance').value,
+                groupeSanguin: document.getElementById('groupeSanguin').value,
+                // The photoBase64 variable holds the latest photo data (either loaded or new upload)
+                photoBase64: photoBase64,
+                derniereModification: new Date().toISOString()
+            };
+
+            // 2. Gather Custom Fields
+            const customFields = {};
+            const customFieldElements = document.querySelectorAll('#customFieldsContainer > div');
+            customFieldElements.forEach(container => {
+                const keyInput = container.querySelector('.custom-key');
+                const valueInput = container.querySelector('.custom-value');
+                const key = keyInput.value.trim();
+                const value = valueInput.value.trim();
+
+                if (key && value) {
+                    customFields[key] = value;
+                }
+            });
+            memberData.champsPersonnalises = customFields;
+
+
+            // 3. Validation
+            if (!memberData.nom || !memberData.prenom) {
+                showMessage("Le Nom et le Prénom sont obligatoires.", 'error', 'saveMessage');
+                document.getElementById('saveButton').disabled = false;
+                document.getElementById('saveButton').textContent = "Sauvegarder les Informations";
+                return;
+            }
+
+            // 4. Save to Firestore
+            try {
+                const memberRef = doc(db, membersCollectionPath, currentMemberId);
+                await setDoc(memberRef, memberData);
+                showMessage(`Membre "${currentMemberId}" sauvegardé avec succès.`, 'success', 'saveMessage');
+            } catch (e) {
+                console.error("Erreur lors de la sauvegarde du membre:", e);
+                showMessage("Erreur: Impossible de sauvegarder les données du membre.", 'error', 'saveMessage');
+            } finally {
+                document.getElementById('saveButton').disabled = false;
+                document.getElementById('saveButton').textContent = "Sauvegarder les Informations";
+            }
+        }
+
+
+        // --- UI HELPERS ---
+
+        /**
+         * Displays a status message.
+         * @param {string} message
+         * @param {'success'|'error'|'warning'} type
+         * @param {string} targetId
+         */
+        function showMessage(message, type, targetId = 'statusMessage') {
+            const target = document.getElementById(targetId);
+            target.textContent = message;
+            target.className = `mt-3 text-sm font-medium ${type === 'success' ? 'text-green-600' : type === 'error' ? 'text-red-600' : 'text-orange-600'}`;
+        }
+
+        /**
+         * Resets the form fields.
+         * @param {boolean} clearId - if true, also clears the ID display
+         */
+        function resetForm(clearId) {
+            document.getElementById('nom').value = '';
+            document.getElementById('prenom').value = '';
+            document.getElementById('dateNaissance').value = '';
+            document.getElementById('groupeSanguin').value = '';
+            document.getElementById('customFieldsContainer').innerHTML = '';
+            photoBase64 = null;
+            document.getElementById('memberPhotoPreview').src = 'https://placehold.co/160x160/cbd5e1/475569?text=Photo';
+
+            if (clearId) {
+                document.getElementById('memberIdDisplay').value = '';
+                currentMemberId = null;
+            }
+        }
+
+        // --- IMAGE PREVIEW AND BASE64 CONVERSION ---
+
+        window.previewImage = async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Simple check to prevent excessively large files (Firestore limit is 1MB)
+            if (file.size > 1024 * 500) { // 500 KB limit for safety
+                showMessage("Photo trop volumineuse. Veuillez choisir une image de moins de 500 KB.", 'error', 'saveMessage');
+                return;
+            }
+
+            try {
+                const base64String = await fileToBase64(file);
+                photoBase64 = base64String;
+                document.getElementById('memberPhotoPreview').src = base64String;
+                showMessage("Photo chargée en mémoire. Cliquez sur 'Sauvegarder' pour la stocker.", 'success', 'saveMessage');
+            } catch (e) {
+                console.error("Erreur lors de la conversion de l'image:", e);
+                showMessage("Erreur lors du chargement de la photo.", 'error', 'saveMessage');
+            }
+        };
+
+        // Load the default member on initialization
+        window.onload = () => {
+             // Delay to ensure auth is complete
+             setTimeout(loadMember, 1500);
+        };
+    </script>
+</body>
+</html>
